@@ -12,7 +12,7 @@
 .type nameStr,%gnu_unique_object
     
 /*** STUDENTS: Change the next line to your name!  **/
-nameStr: .asciz "Inigo Montoya"  
+nameStr: .asciz "Roberta Cavallaro"  
 .align
  
 /* initialize a global variable that C can access to print the nameStr */
@@ -151,6 +151,59 @@ getNextFrame:
     
     /* STUDENT CODE BELOW THIS LINE vvvvvvvvvvvvvvvvvvv */
     
+    /* Output buffer k*/
+    LDR r6,=asmFrameCounter
+    LDR r7,[r6]          /* load the counter for frame  */
+    TST r7,1             /* test if frame is odd */
+    LDRNE r8,=buf1       /* if it is odd then use buf1 */
+    LDREQ r8,=buf0       /* if it is even then use buf0 */
+    
+  
+    MOV r9, r8           /* save buffer pointer */
+    MOV r10, 0           /* store (0) */
+    MOV r11, NUM_WORDS_IN_BUF  /* number of words to clear in buffet*/
+    
+clearLoop:
+    STR r10, [r8], 4     /* store 0 and increase pointer by 4 bytes */
+    SUBS r11, r11, 1     /* decrease counter */
+    BNE clearLoop        /* continue loop if not zero */
+    
+    /* Calculate the horizontal UFO position based on the frame */
+    MOV r8, r7           /* copy frame counter */
+    AND r8, r8, 31       /* keep only lower 5 bits bettween 0-31  */
+    
+    /* Store output buffer pointer */
+    TST r7,1
+    LDRNE r9,=buf1
+    LDREQ r9,=buf0
+    
+    /* Calculation for destination address  */
+    ADD r9, r9, 64/*buf+(8*8) bytes for row 8*/
+    
+    
+    LDR r10,=rowA08 /* Get UFO source data */
+    
+    
+    MOV r11, 5    /* Copy and shift UFO by 5 rows */
+    
+copyLoop:
+    /* Load UFO row data */
+    LDR r4,[r10], 4      /* load first word */
+    LDR r6,[r10], 4      /* load second word */
+    
+    /* Shift right by r8 pixels */
+    LSR r4, r4, r8       /* shift first word to the right */
+    RSB r12, r8, 32      /* r12 = 32 - offset */
+    LSL r3, r6, r12      /* shift second word left to fill gap */
+    ORR r4, r4, r3       /* combine them */
+    LSR r6, r6, r8       /* shift second word right */
+    
+    /* Store shifted data */
+    STR r4,[r9], 4       /* store first word */
+    STR r6,[r9], 4       /* store second word */
+    
+    SUBS r11, r11, 1     /* decrement row counter */
+    BNE copyLoop
     
     /* STUDENT CODE ABOVE THIS LINE ^^^^^^^^^^^^^^^^^^^ */
     
@@ -184,7 +237,3 @@ getNextFrame:
 /**********************************************************************/   
 .end  /* The assembler will not process anything after this directive!!! */
            
-
-
-
-
